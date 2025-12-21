@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 const QUANTUM = 2;
 
-export const useSchedulerStore = create((set, get) => ({
+const initialState = {
   processes: [],
   readyQueue: [],
   currentProcess: null,
@@ -10,10 +10,14 @@ export const useSchedulerStore = create((set, get) => ({
   currentTime: 0,
   isRunning: false,
   speed: 1,
-  logs: [],
+  logs: [{ time: 0, message: 'System initialized', type: 'info' }],
   ganttChart: [],
   quantumRemaining: QUANTUM,
   algorithm: 'Round Robin',
+};
+
+export const useSchedulerStore = create((set, get) => ({
+  ...initialState,
   
   addProcess: (burstTime, priority = 0) => {
     const state = get();
