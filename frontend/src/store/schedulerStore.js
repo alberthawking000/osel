@@ -183,15 +183,8 @@ export const useSchedulerStore = create((set, get) => ({
   
   reset: () =>
     set({
-      processes: [],
-      readyQueue: [],
-      currentProcess: null,
-      completedProcesses: [],
-      currentTime: 0,
-      isRunning: false,
+      ...initialState,
       logs: [{ time: 0, message: 'System reset', type: 'info' }],
-      ganttChart: [],
-      quantumRemaining: QUANTUM,
     }),
   
   getMetrics: () => {
