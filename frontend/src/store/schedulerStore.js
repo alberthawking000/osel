@@ -1,16 +1,21 @@
 import { create } from 'zustand';
+import { useLogStore } from './logStore';
 
 const QUANTUM = 2;
 
 const initialState = {
-  processes: [],
-  readyQueue: [],
+  processes: [
+    { id: 'WebServer', burstTime: 6, remainingTime: 6, priority: 10, arrivalTime: 0, startTime: null, completionTime: null, waitingTime: 0, turnaroundTime: 0, state: 'ready' },
+    { id: 'Database', burstTime: 4, remainingTime: 4, priority: 5, arrivalTime: 0, startTime: null, completionTime: null, waitingTime: 0, turnaroundTime: 0, state: 'ready' },
+  ],
+  readyQueue: [
+    { id: 'WebServer', burstTime: 6, remainingTime: 6, priority: 10, arrivalTime: 0, startTime: null, completionTime: null, waitingTime: 0, turnaroundTime: 0, state: 'ready' },
+    { id: 'Database', burstTime: 4, remainingTime: 4, priority: 5, arrivalTime: 0, startTime: null, completionTime: null, waitingTime: 0, turnaroundTime: 0, state: 'ready' },
+  ],
   currentProcess: null,
   completedProcesses: [],
   currentTime: 0,
   isRunning: false,
-  speed: 1,
-  logs: [{ time: 0, message: 'System initialized', type: 'info' }],
   ganttChart: [],
   quantumRemaining: QUANTUM,
   algorithm: 'Round Robin',
@@ -19,10 +24,10 @@ const initialState = {
 export const useSchedulerStore = create((set, get) => ({
   ...initialState,
   
-  addProcess: (burstTime, priority = 0) => {
+  addProcess: (id, burstTime, priority = 0) => {
     const state = get();
     const newProcess = {
-      id: `P${state.processes.length + 1}`,
+      id: id || `P${state.processes.length + 1}`,
       burstTime,
       remainingTime: burstTime,
       priority,
@@ -37,15 +42,10 @@ export const useSchedulerStore = create((set, get) => ({
     set((state) => ({
       processes: [...state.processes, newProcess],
       readyQueue: [...state.readyQueue, newProcess],
-      logs: [
-        ...state.logs,
-        {
-          time: state.currentTime,
-          message: `Process ${newProcess.id} added to ready queue (Burst: ${burstTime})`,
-          type: 'info',
-        },
-      ],
     }));
+    
+    // Add log to global log store
+    useLogStore.getState().addLog(`Process ${newProcess.id} added to ready queue (Burst: ${burstTime}, Priority: ${priority})`, 'info');
   },
   
   step: () => {
@@ -65,14 +65,6 @@ export const useSchedulerStore = create((set, get) => ({
             ? { ...p, state: 'running', startTime: p.startTime || state.currentTime }
             : p
         ),
-        logs: [
-          ...state.logs,
-          {
-            time: state.currentTime,
-            message: `Process ${nextProcess.id} loaded to CPU`,
-            type: 'success',
-          },
-        ],
         ganttChart: [
           ...state.ganttChart,
           {
@@ -82,6 +74,9 @@ export const useSchedulerStore = create((set, get) => ({
           },
         ],
       }));
+      
+      // Add log to global log store
+      useLogStore.getState().addLog(`Process ${nextProcess.id} loaded to CPU`, 'success');
       return;
     }
     
@@ -128,15 +123,10 @@ export const useSchedulerStore = create((set, get) => ({
           processes: state.processes.map((p) =>
             p.id === completedProcess.id ? completedProcess : p
           ),
-          logs: [
-            ...state.logs,
-            {
-              time: state.currentTime,
-              message: `Process ${completedProcess.id} completed (TAT: ${completedProcess.turnaroundTime}, WT: ${completedProcess.waitingTime})`,
-              type: 'success',
-            },
-          ],
         }));
+        
+        // Add log to global log store
+        useLogStore.getState().addLog(`Process ${completedProcess.id} completed (TAT: ${completedProcess.turnaroundTime}, WT: ${completedProcess.waitingTime})`, 'success');
       }
       // Quantum expired but process not complete
       else if (isQuantumExpired) {
@@ -147,15 +137,10 @@ export const useSchedulerStore = create((set, get) => ({
           processes: state.processes.map((p) =>
             p.id === updatedProcess.id ? { ...updatedProcess, state: 'ready' } : p
           ),
-          logs: [
-            ...state.logs,
-            {
-              time: state.currentTime,
-              message: `Context switch: ${updatedProcess.id} → Ready Queue (Quantum expired)`,
-              type: 'warning',
-            },
-          ],
         }));
+        
+        // Add log to global log store
+        useLogStore.getState().addLog(`Context switch: ${updatedProcess.id} → Ready Queue (Quantum expired)`, 'warning');
       }
       // Continue executing
       else {
@@ -179,13 +164,56 @@ export const useSchedulerStore = create((set, get) => ({
   play: () => set({ isRunning: true }),
   pause: () => set({ isRunning: false }),
   
-  setSpeed: (speed) => set({ speed }),
+  reset: () => {
+    set(initialState);
+    // Add log to global log store
+    useLogStore.getState().addLog('Scheduler system reset', 'info');
+  },
   
-  reset: () =>
-    set({
-      ...initialState,
-      logs: [{ time: 0, message: 'System reset', type: 'info' }],
-    }),
+  // Play example scenario
+  playExample: () => {
+    // Reset first
+    set(initialState);
+    
+    // Add log to global log store
+    useLogStore.getState().addLog('Starting Process Scheduler Example Scenario', 'info');
+    
+    // Add realistic processes with different priorities and burst times
+    setTimeout(() => {
+      useLogStore.getState().addLog('Adding Web Server Process (P1) - High Priority, Burst Time: 6', 'info');
+      get().addProcess('WebServer', 6, 10); // High priority
+    }, 500);
+    
+    setTimeout(() => {
+      useLogStore.getState().addLog('Adding Database Process (P2) - Medium Priority, Burst Time: 4', 'info');
+      get().addProcess('Database', 4, 5); // Medium priority
+    }, 1000);
+    
+    setTimeout(() => {
+      useLogStore.getState().addLog('Adding File Transfer Process (P3) - Low Priority, Burst Time: 10', 'info');
+      get().addProcess('FileTransfer', 10, 2); // Low priority
+    }, 1500);
+    
+    setTimeout(() => {
+      useLogStore.getState().addLog('Adding User Interface Process (P4) - High Priority, Burst Time: 3', 'info');
+      get().addProcess('UIProcess', 3, 8); // High priority
+    }, 2000);
+    
+    // Start playing
+    setTimeout(() => {
+      set({ isRunning: true });
+      useLogStore.getState().addLog('Starting scheduler simulation with Round Robin (Quantum = 2)', 'info');
+      useLogStore.getState().addLog('Observing how high-priority processes get scheduled more frequently', 'info');
+    }, 2500);
+    
+    // Add another process during execution to show dynamic scheduling
+    setTimeout(() => {
+      if (get().isRunning) {
+        useLogStore.getState().addLog('Emergency System Update Process (P5) added - Critical Priority, Burst Time: 2', 'info');
+        get().addProcess('SystemUpdate', 2, 15); // Critical priority
+      }
+    }, 8000);
+  },
   
   getMetrics: () => {
     const state = get();

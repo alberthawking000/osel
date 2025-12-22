@@ -7,8 +7,8 @@ import { Play, Pause, SkipForward } from 'lucide-react';
 import { Slider } from '../ui/slider';
 
 const PlaybackControls = () => {
-  const { isDark } = useThemeStore();
-  const { isRunning, play, pause, step, speed, setSpeed } = useSchedulerStore();
+  const { isDark, globalSpeed, setGlobalSpeed } = useThemeStore();
+  const { isRunning, play, pause, step } = useSchedulerStore();
   
   return (
     <Card className={`p-4 ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
@@ -50,12 +50,12 @@ const PlaybackControls = () => {
           <div className="flex items-center justify-between mb-2">
             <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Speed</span>
             <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {speed}x
+              {globalSpeed}x
             </span>
           </div>
           <Slider
-            value={[speed]}
-            onValueChange={(value) => setSpeed(value[0])}
+            value={[globalSpeed]}
+            onValueChange={(value) => setGlobalSpeed(value[0])}
             min={0.5}
             max={4}
             step={0.5}

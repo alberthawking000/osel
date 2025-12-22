@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useLogStore } from './logStore';
 
 const PAGE_SIZE = 4096; // 4KB
 const NUM_PAGES = 16; // 4-bit page number
@@ -8,16 +9,19 @@ const TLB_SIZE = 4;
 const initialState = {
   pageTable: Array(NUM_PAGES).fill(null).map(() => ({ frame: null, valid: false, processId: null })),
   tlb: [],
-  physicalMemory: Array(NUM_FRAMES).fill(null).map(() => ({ page: null, processId: null, lastAccessed: 0 })),
-  currentProcess: 'P1',
+  physicalMemory: Array(NUM_FRAMES).fill(null).map((_, index) => ({ 
+    page: index < 3 ? index : null, 
+    processId: index < 3 ? 'OS' : null, 
+    lastAccessed: index < 3 ? 1 : 0 
+  })),
+  currentProcess: 'WebBrowser',
   accessCount: 0,
   tlbHits: 0,
   tlbMisses: 0,
   pageFaults: 0,
   totalAccesses: 0,
-  logs: [{ time: 0, message: 'Memory system initialized', type: 'info' }],
   lastTranslation: null,
-  fifoQueue: [],
+  fifoQueue: [0, 1, 2],
 };
 
 export const useMemoryStore = create((set, get) => ({
@@ -30,12 +34,8 @@ export const useMemoryStore = create((set, get) => ({
     const offset = virtualAddress % PAGE_SIZE;
     
     if (pageNumber >= NUM_PAGES) {
-      set((state) => ({
-        logs: [
-          ...state.logs,
-          { time: Date.now(), message: `Invalid address 0x${virtualAddress.toString(16).toUpperCase()} - page number out of range`, type: 'error' },
-        ],
-      }));
+      // Add log to global log store
+      useLogStore.getState().addLog(`Invalid address 0x${virtualAddress.toString(16).toUpperCase()} - page number out of range`, 'error');
       return;
     }
     
@@ -58,11 +58,10 @@ export const useMemoryStore = create((set, get) => ({
         tlbHits: state.tlbHits + 1,
         totalAccesses: state.totalAccesses + 1,
         accessCount: state.accessCount + 1,
-        logs: [
-          ...state.logs,
-          { time: state.accessCount + 1, message: `TLB Hit: Page ${pageNumber} → Frame ${frameNumber}`, type: 'success' },
-        ],
       }));
+      
+      // Add log to global log store
+      useLogStore.getState().addLog(`TLB Hit: Page ${pageNumber} → Frame ${frameNumber}`, 'success');
     } else {
       // TLB Miss
       translationSteps.push({ step: 1, action: 'Check TLB', status: 'miss', detail: `Page ${pageNumber} not in TLB` });
@@ -70,11 +69,10 @@ export const useMemoryStore = create((set, get) => ({
       set((state) => ({
         tlbMisses: state.tlbMisses + 1,
         totalAccesses: state.totalAccesses + 1,
-        logs: [
-          ...state.logs,
-          { time: state.accessCount + 1, message: `TLB Miss: Page ${pageNumber}`, type: 'warning' },
-        ],
       }));
+      
+      // Add log to global log store
+      useLogStore.getState().addLog(`TLB Miss: Page ${pageNumber}`, 'warning');
       
       // Step 2: Check Page Table
       translationSteps.push({ step: 2, action: 'Check Page Table', status: 'pending' });
@@ -105,12 +103,11 @@ export const useMemoryStore = create((set, get) => ({
             pageTable: newPageTable,
             pageFaults: state.pageFaults + 1,
             accessCount: state.accessCount + 1,
-            logs: [
-              ...state.logs,
-              { time: state.accessCount + 1, message: `Page Fault: Loaded Page ${pageNumber} into Frame ${frameNumber}`, type: 'error' },
-            ],
           };
         });
+        
+        // Add log to global log store
+        useLogStore.getState().addLog(`Page Fault: Loaded Page ${pageNumber} into Frame ${frameNumber}`, 'error');
         
         // Update TLB
         get().updateTLB(pageNumber, frameNumber);
@@ -189,11 +186,10 @@ export const useMemoryStore = create((set, get) => ({
       // Update FIFO queue
       set((state) => ({
         fifoQueue: [...state.fifoQueue.slice(1), frameIndex],
-        logs: [
-          ...state.logs,
-          { time: state.accessCount, message: `Page replacement: Evicted Page ${oldPage} from Frame ${frameIndex}`, type: 'warning' },
-        ],
       }));
+      
+      // Add log to global log store
+      useLogStore.getState().addLog(`Page replacement: Evicted Page ${oldPage} from Frame ${frameIndex}`, 'warning');
     } else {
       // Add to FIFO queue
       set((state) => ({
@@ -213,20 +209,88 @@ export const useMemoryStore = create((set, get) => ({
   
   loadProcess: (processId, pages) => {
     set({ currentProcess: processId });
-    pages.forEach((pageNum) => {
-      get().translateAddress(pageNum * PAGE_SIZE);
+    
+    // Add log to global log store
+    useLogStore.getState().addLog(`Loading process ${processId} with ${pages.length} pages`, 'info');
+    
+    // Simulate loading pages with small delays to show the process
+    pages.forEach((pageNum, index) => {
+      setTimeout(() => {
+        get().translateAddress(pageNum * PAGE_SIZE);
+      }, index * 300);
     });
+  },
+  
+  // Play example scenario
+  playExample: () => {
+    // Reset memory first
+    set(initialState);
+    
+    // Add log to global log store
+    useLogStore.getState().addLog('Starting Memory Management Example Scenario', 'info');
+    
+    // Simulate a realistic memory access pattern for a web browser process
+    setTimeout(() => {
+      useLogStore.getState().addLog('Loading Web Browser Process (P1) with code pages [0, 1] and data pages [8, 9, 10]', 'info');
+      get().loadProcess('P1', [0, 1, 8, 9, 10]);
+    }, 500);
+    
+    setTimeout(() => {
+      useLogStore.getState().addLog('Accessing virtual address 0x0800 (Code Page 0) - First access', 'info');
+      get().translateAddress(0x0800); // Page 0 - First access, will cause page fault then TLB update
+    }, 1500);
+    
+    setTimeout(() => {
+      useLogStore.getState().addLog('Accessing virtual address 0x1200 (Code Page 1) - Sequential access', 'info');
+      get().translateAddress(0x1200); // Page 1 - Sequential access
+    }, 2500);
+    
+    setTimeout(() => {
+      useLogStore.getState().addLog('Accessing virtual address 0x0800 again (Code Page 0) - TLB Hit expected', 'info');
+      get().translateAddress(0x0800); // Page 0 - Should be TLB hit now
+    }, 3500);
+    
+    setTimeout(() => {
+      useLogStore.getState().addLog('Loading Database Process (P2) with pages [2, 3, 4]', 'info');
+      get().loadProcess('P2', [2, 3, 4]);
+    }, 4500);
+    
+    setTimeout(() => {
+      useLogStore.getState().addLog('Accessing virtual address 0x2400 (Data Page 2) - New process access', 'info');
+      get().translateAddress(0x2400); // Page 2 - New process, will cause page fault
+    }, 5500);
+    
+    setTimeout(() => {
+      useLogStore.getState().addLog('Simulating memory pressure - Loading Video Process (P3)', 'info');
+      get().loadProcess('P3', [5, 6, 7, 11, 12]);
+    }, 6500);
+    
+    setTimeout(() => {
+      useLogStore.getState().addLog('Accessing virtual address 0xA000 (Stack Page 10) - Page replacement demonstration', 'info');
+      get().translateAddress(0xA000); // Page 10 - Will demonstrate page replacement
+    }, 7500);
+    
+    setTimeout(() => {
+      useLogStore.getState().addLog('Re-accessing virtual address 0x0800 (Code Page 0) - Potential TLB miss', 'info');
+      get().translateAddress(0x0800); // Page 0 - May demonstrate TLB miss if evicted
+    }, 8500);
   },
   
   clearMemory: () => {
     set((state) => ({
       ...initialState,
       accessCount: state.accessCount,
-      logs: [...state.logs, { time: state.accessCount, message: 'Memory cleared', type: 'info' }],
     }));
+    
+    // Add log to global log store
+    useLogStore.getState().addLog('Memory cleared', 'info');
   },
   
-  reset: () => set({ ...initialState }),
+  reset: () => {
+    set({ ...initialState });
+    // Add log to global log store
+    useLogStore.getState().addLog('Memory system reset', 'info');
+  },
   
   getMetrics: () => {
     const state = get();

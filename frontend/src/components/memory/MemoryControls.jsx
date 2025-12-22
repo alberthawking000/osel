@@ -5,11 +5,11 @@ import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Search, RotateCcw, Cpu } from 'lucide-react';
+import { Search, RotateCcw, Cpu, Play } from 'lucide-react';
 
 const MemoryControls = () => {
   const { isDark } = useThemeStore();
-  const { translateAddress, loadProcess, clearMemory, reset, currentProcess } = useMemoryStore();
+  const { translateAddress, loadProcess, clearMemory, reset, currentProcess, playExample } = useMemoryStore();
   const [virtualAddress, setVirtualAddress] = useState('');
   
   const handleTranslate = () => {
@@ -70,24 +70,43 @@ const MemoryControls = () => {
           <Label className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-2 block`}>
             Quick Load
           </Label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <Button
-              onClick={() => handleLoadProcess('P1', [0, 1, 2, 3])}
+              onClick={() => handleLoadProcess('WebBrowser', [0, 1, 8, 9, 10])}
               variant="outline"
               size="sm"
               className={isDark ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-300 hover:bg-gray-100'}
             >
-              Load P1
+              Load Web Browser
             </Button>
             <Button
-              onClick={() => handleLoadProcess('P2', [4, 5, 6])}
+              onClick={() => handleLoadProcess('Database', [2, 3, 4])}
               variant="outline"
               size="sm"
               className={isDark ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-300 hover:bg-gray-100'}
             >
-              Load P2
+              Load Database
+            </Button>
+            <Button
+              onClick={() => handleLoadProcess('VideoPlayer', [5, 6, 7, 11, 12])}
+              variant="outline"
+              size="sm"
+              className={isDark ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-300 hover:bg-gray-100'}
+            >
+              Load Video Player
             </Button>
           </div>
+        </div>
+        
+        {/* Play Example Button */}
+        <div className="pt-2">
+          <Button
+            onClick={playExample}
+            className={`w-full ${isDark ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white`}
+          >
+            <Play size={18} className="mr-2" />
+            Play Example Scenario
+          </Button>
         </div>
         
         {/* Actions */}

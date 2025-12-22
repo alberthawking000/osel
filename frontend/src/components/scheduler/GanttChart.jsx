@@ -18,8 +18,22 @@ const GanttChart = () => {
       { bg: 'bg-rose-500', text: 'text-white' },
       { bg: 'bg-cyan-500', text: 'text-white' },
     ];
-    const processNum = parseInt(processId.replace('P', ''));
-    return colors[(processNum - 1) % colors.length];
+    
+    // Handle different process ID formats
+    let processNum = 0;
+    if (processId && typeof processId === 'string') {
+      if (processId.startsWith('P')) {
+        processNum = parseInt(processId.replace('P', '')) || 0;
+      } else {
+        // For named processes like 'WebServer', 'Database', etc.
+        const hash = processId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        processNum = hash;
+      }
+    }
+    
+    // Ensure we have a valid index
+    const index = processNum >= 0 ? (processNum % colors.length) : 0;
+    return colors[index] || colors[0]; // Fallback to first color if somehow undefined
   };
   
   const maxTime = Math.max(currentTime, 20);
@@ -51,7 +65,7 @@ const GanttChart = () => {
           </div>
           
           {/* Gantt bars */}
-          <div className="relative h-16 rounded-lg border ${isDark ? 'border-gray-800 bg-gray-950' : 'border-gray-300 bg-gray-50'}">
+          <div className={`relative h-16 rounded-lg border ${isDark ? 'border-gray-800 bg-gray-950' : 'border-gray-300 bg-gray-50'}`}>
             {ganttChart.length === 0 ? (
               <div className="flex items-center justify-center h-full text-sm text-gray-500 italic">
                 No execution history

@@ -8,11 +8,10 @@ import CPUDisplay from '../components/scheduler/CPUDisplay';
 import GanttChart from '../components/scheduler/GanttChart';
 import MetricsPanel from '../components/scheduler/MetricsPanel';
 import PlaybackControls from '../components/scheduler/PlaybackControls';
-import LoggingPanel from '../components/scheduler/LoggingPanel';
 
 const ProcessScheduler = () => {
-  const { isDark } = useThemeStore();
-  const { isRunning, step, speed } = useSchedulerStore();
+  const { isDark, globalSpeed } = useThemeStore();
+  const { isRunning, step } = useSchedulerStore();
 
   // Auto-step when playing
   useEffect(() => {
@@ -20,10 +19,10 @@ const ProcessScheduler = () => {
 
     const interval = setInterval(() => {
       step();
-    }, 1000 / speed);
+    }, 1000 / globalSpeed);
 
     return () => clearInterval(interval);
-  }, [isRunning, speed, step]);
+  }, [isRunning, globalSpeed, step]);
 
   return (
     <div className={`p-8 ${isDark ? 'bg-gray-950' : 'bg-gray-50'} min-h-full`}>
@@ -56,7 +55,6 @@ const ProcessScheduler = () => {
               <CPUDisplay />
             </div>
             <GanttChart />
-            <LoggingPanel />
           </div>
         </div>
       </div>

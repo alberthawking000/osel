@@ -1,10 +1,25 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useThemeStore } from '../store/themeStore';
-import { Card } from '../components/ui/card';
+import { useSyscallStore } from '../store/syscallStore';
 import { Terminal } from 'lucide-react';
+import SyscallControls from '../components/syscall/SyscallControls';
+import SyscallVisualization from '../components/syscall/SyscallVisualization';
+import SyscallDetails from '../components/syscall/SyscallDetails';
 
 const SystemCalls = () => {
-  const { isDark } = useThemeStore();
+  const { isDark, globalSpeed } = useThemeStore();
+  const { isRunning, step } = useSyscallStore();
+
+  // Auto-step when playing
+  useEffect(() => {
+    if (!isRunning) return;
+
+    const interval = setInterval(() => {
+      step();
+    }, 1000 / globalSpeed);
+
+    return () => clearInterval(interval);
+  }, [isRunning, globalSpeed, step]);
 
   return (
     <div className={`p-8 ${isDark ? 'bg-gray-950' : 'bg-gray-50'} min-h-full`}>
@@ -21,15 +36,19 @@ const SystemCalls = () => {
           </p>
         </div>
 
-        <Card className={`p-12 text-center ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
-          <div className={`text-6xl mb-4`}>💻</div>
-          <h2 className={`text-2xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            Coming in Phase 5
-          </h2>
-          <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            System call visualization will be implemented in a later phase
-          </p>
-        </Card>
+        {/* Main Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* Left Column - Controls */}
+          <div className="space-y-6">
+            <SyscallControls />
+          </div>
+
+          {/* Middle & Right Columns - Visualizations */}
+          <div className="lg:col-span-2 space-y-6">
+            <SyscallVisualization />
+            <SyscallDetails />
+          </div>
+        </div>
       </div>
     </div>
   );

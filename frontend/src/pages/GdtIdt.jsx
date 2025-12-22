@@ -2,6 +2,9 @@ import React from 'react';
 import { useThemeStore } from '../store/themeStore';
 import { Card } from '../components/ui/card';
 import { Table2 } from 'lucide-react';
+import DescriptorTable from '../components/descriptors/DescriptorTable';
+import DescriptorDetails from '../components/descriptors/DescriptorDetails';
+import ViewToggle from '../components/descriptors/ViewToggle';
 
 const GdtIdt = () => {
   const { isDark } = useThemeStore();
@@ -17,19 +20,23 @@ const GdtIdt = () => {
             </h1>
           </div>
           <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            Inspect Global Descriptor Table and Interrupt Descriptor Table
+            Inspect Global Descriptor Table and Interrupt Descriptor Table entries
           </p>
         </div>
 
-        <Card className={`p-12 text-center ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
-          <div className={`text-6xl mb-4`}>📋</div>
-          <h2 className={`text-2xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            Coming in Phase 4
-          </h2>
-          <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            GDT/IDT inspection will be implemented after memory management
-          </p>
-        </Card>
+        {/* Main Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* Left Column - Controls */}
+          <div className="space-y-6">
+            <ViewToggle />
+          </div>
+
+          {/* Middle & Right Columns - Visualizations */}
+          <div className="lg:col-span-2 space-y-6">
+            <DescriptorTable />
+            <DescriptorDetails />
+          </div>
+        </div>
       </div>
     </div>
   );

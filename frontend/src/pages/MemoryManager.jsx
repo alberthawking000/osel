@@ -7,7 +7,6 @@ import PageTable from '../components/memory/PageTable';
 import PhysicalMemory from '../components/memory/PhysicalMemory';
 import TranslationDisplay from '../components/memory/TranslationDisplay';
 import MemoryMetrics from '../components/memory/MemoryMetrics';
-import MemoryLog from '../components/memory/MemoryLog';
 
 const MemoryManager = () => {
   const { isDark } = useThemeStore();
@@ -43,7 +42,6 @@ const MemoryManager = () => {
               <PageTable />
               <PhysicalMemory />
             </div>
-            <MemoryLog />
           </div>
         </div>
       </div>

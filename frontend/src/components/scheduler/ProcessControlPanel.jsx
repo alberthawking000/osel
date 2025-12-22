@@ -14,7 +14,7 @@ const ProcessControlPanel = () => {
   
   const handleAddProcess = () => {
     if (burstTime > 0 && burstTime <= 20) {
-      addProcess(burstTime);
+      addProcess(null, burstTime);
       setBurstTime(5);
     }
   };

@@ -1,13 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import { useThemeStore } from '../../store/themeStore';
-import { useMemoryStore } from '../../store/memoryStore';
+import { useLogStore } from '../../store/logStore';
 import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 import { FileText } from 'lucide-react';
 
-const MemoryLog = () => {
+const LoggingPanel = () => {
   const { isDark } = useThemeStore();
-  const { logs } = useMemoryStore();
+  const { logs } = useLogStore();
   const scrollRef = useRef(null);
   
   useEffect(() => {
@@ -67,12 +67,12 @@ const MemoryLog = () => {
           ) : (
             logs.map((log, index) => (
               <div
-                key={index}
+                key={log.id || index}
                 className={`text-xs font-mono flex gap-2 ${getLogColor(log.type)}`}
               >
-                <span className="opacity-60">[{log.time.toString().padStart(3, '0')}]</span>
+                <span className="opacity-60">[{new Date(log.time).toLocaleTimeString()}]</span>
                 <span>{getLogIcon(log.type)}</span>
-                <span className="flex-1">{log.message}</span>
+                <span>{log.message}</span>
               </div>
             ))
           )}
@@ -82,4 +82,4 @@ const MemoryLog = () => {
   );
 };
 
-export default MemoryLog;
+export default LoggingPanel;
