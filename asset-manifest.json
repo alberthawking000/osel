@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/os-kernel-visualizer/static/css/main.20400bdb.css",
+    "main.js": "/os-kernel-visualizer/static/js/main.b91abfc9.js",
+    "index.html": "/os-kernel-visualizer/index.html",
+    "main.20400bdb.css.map": "/os-kernel-visualizer/static/css/main.20400bdb.css.map",
+    "main.b91abfc9.js.map": "/os-kernel-visualizer/static/js/main.b91abfc9.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.20400bdb.css",
+    "static/js/main.b91abfc9.js"
+  ]
+}
